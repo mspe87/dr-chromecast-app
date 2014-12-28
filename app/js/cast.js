@@ -1,3 +1,14 @@
+$( document ).ready(function() {
+
+	var player = $("#player");
+	if (player){
+		$("#castimg").click(function(){
+			clickChromeCast();
+		});
+	}
+
+});
+
 var app = {};
 
 
@@ -15,79 +26,187 @@ function initializeCastApi() {
 	chrome.cast.initialize(apiConfig, onInitSuccess, onError);
 }
 
+function startStreaming(title, imageUri, streamUri, subtitleUri){
+		//subtitleUri = "http://192.168.0.7:8888/test.vtt";
+
+
+		console.log("streamUri is " + streamUri);
+		console.log("subtitle Uri is " + subtitleUri);
+		console.log("title " + title);
+		console.log("imageUri " + imageUri);
+
+		if (app.session!==null){
+
+			var mediaInfo = new chrome.cast.media.MediaInfo(streamUri);
+
+			mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
+			mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
+			mediaInfo.contentType = 'video/mp4';
+			mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
+			mediaInfo.metadata.title = title;
+			mediaInfo.metadata.images = [{'url': imageUri}];
+
+
+			mediaInfo.duration = null;
+
+
+			if (subtitleUri){
+		      	var danishSubtitle = new chrome.cast.media.Track(1, // track ID
+		      		chrome.cast.media.TrackType.TEXT);
+		      	danishSubtitle.trackContentId = subtitleUri;
+		      	danishSubtitle.trackContentType = 'text/vtt';
+		      	danishSubtitle.subtype = chrome.cast.media.TextTrackType.SUBTITLES;
+		      	danishSubtitle.name = 'Danske undertekster';
+		      	danishSubtitle.language = 'da';
+		      	danishSubtitle.customData = null;
+		      	var tracks = [danishSubtitle];
+		      	mediaInfo.tracks = tracks;
+		      	mediaInfo.textTrackStyle = new chrome.cast.media.TextTrackStyle();
+
+		      } else {
+		      	console.log("no subtitles");
+		      }
 
 
 
-function onInitSuccess(){
-	console.log("onInitSuccess init");
-	chrome.cast.requestSession(onRequestSessionSuccess, onLaunchError);
-}
 
-function onError(){
-	console.log("onError error");
-}
+		      console.log(mediaInfo);
 
-function sessionListener(e){
-	console.log("sessionListener " + e);
-}
+		      var request = new chrome.cast.media.LoadRequest(mediaInfo);
+		      request.autoplay = true;
+		      request.currentTime = 0;
+		      if (subtitleUri){
+		      	request.activeTrackIds=[1];
+		      }
 
-function receiverListener(e){
-	console.log("receiverListener " + e);
-}
-function onRequestSessionSuccess(e){
-	session = e;
-	console.log("got a session " + e);
+		      app.session.loadMedia(request,
+		      	onMediaDiscovered.bind(this, 'loadMedia'),
+		      	onMediaError);
 
 
 
-	var danishSubtitle = new chrome.cast.media.Track(1, // track ID
-		chrome.cast.media.TrackType.TEXT);
-	danishSubtitle.trackContentId = 'https://www.dr.dk/mu-online/api/1.2/bar/548062936187a20d7cf48704';
-	danishSubtitle.contentType = 'text/vtt';
-	danishSubtitle.subtype = chrome.cast.media.TextTrackType.SUBTITLES;
-	danishSubtitle.name = 'Danish Subtitles';
-	danishSubtitle.language = 'da';
-	danishSubtitle.customData = null;
-	var tracks = [danishSubtitle];
-
-
-	var mediaInfo = new chrome.cast.media.MediaInfo("http://drod09k-vh.akamaihd.net/i/all/clear/streaming/d3/549ca479a11f9d1b0c32acd3/Hele-Danmarks-X-Factor_6d413d9a964941028dcadcb14e403a08_,1126,562,248,.mp4.csmil/master.m3u8");
-
-	mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
-	mediaInfo.metadata.metadataType = chrome.cast.media.MetadataType.GENERIC;
-	mediaInfo.contentType = 'video/mp4';
-	mediaInfo.streamType = chrome.cast.media.StreamType.BUFFERED;
-	mediaInfo.metadata.title = "Arvingerne (10:10)";
-	mediaInfo.metadata.images = [{'url': "http://www.dr.dk/mu-online/api/1.2/bar/530b09bca11f9d08c8cc3d4c"}];
-	
-	mediaInfo.textTrackStyle = new chrome.cast.media.TextTrackStyle();
-	mediaInfo.duration = null;
-	mediaInfo.tracks = tracks;
-
-	console.log(mediaInfo);
-
-	var request = new chrome.cast.media.LoadRequest(mediaInfo);
-	request.autoplay = true;
-	request.currentTime = 0;
-	request.activeTrackIds=[1];
-
-	session.loadMedia(request,
-		onMediaDiscovered.bind(this, 'loadMedia'),
-		onMediaError);
+		  }
+		}
 
 
 
-}
-function onLaunchError(){
-	console.log("sa");
-}
 
-function onMediaError(){
-	console.log("error ");
+		function onInitSuccess(){
+			console.log("onInitSuccess init");
+			chrome.cast.requestSession(onRequestSessionSuccess, onLaunchError);
+		}
 
-}
+		function onError(){
+			console.log("onError error");
+		}
 
-function onMediaDiscovered(how, media) {
-	console.log("onMediaDiscovered");
-	currentMedia = media;
-}
+		function sessionListener(e){
+			console.log("sessionListener " + e);
+		}
+
+		function receiverListener(e){
+			console.log("receiverListener " + e);
+		}
+		function onRequestSessionSuccess(e){
+			app.session = e;
+			console.log("got a session " + e);
+		}
+		function onLaunchError(){
+			console.log("sa");
+		}
+
+		function onMediaError(){
+			console.log("error ");
+
+		}
+
+		function onMediaDiscovered(how, media) {
+			console.log("onMediaDiscovered");
+			currentMedia = media;
+		}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+		function getSlug(url){
+			var array = url.split("/");
+			console.log("length " + array.length);
+
+			return array[array.length-1];
+		}
+
+		function clickChromeCast(){
+			$(".content-overlay").empty();
+			startPlayIng(window.location.pathname);
+
+			
+		}
+
+		function startPlayIng(url){
+			var slug = getSlug(url);
+			$.get( "http://www.dr.dk/mu-online/api/1.2/programcard/"+slug, function( data ) {
+				handleProgramCard(data);
+			});
+		}
+
+		function handleProgramCard(programcard){
+			console.log(programcard);
+			console.log(programcard.PrimaryAsset.Uri);
+			$.get( programcard.PrimaryAsset.Uri, function( data ) {
+				var streamUri = getStreamUri(data);
+				var subtitleUri = getSubtitleUri(data);
+				console.log("streamUri is " + streamUri);
+				console.log("subtitle Uri is " + subtitleUri);
+				console.log("title " + programcard.Title);
+				console.log("imageUri " + programcard.PrimaryImageUri);
+				startStreaming(programcard.Title, programcard.PrimaryImageUri, streamUri, subtitleUri);
+			});
+
+		}
+
+		function getSubtitleUri(manifest){
+			console.log("getSubtitleUri");
+			console.log(manifest);
+			console.log(manifest.SubtitlesList);
+			for (var i=0; i<manifest.SubtitlesList.length; i++){
+				var current = manifest.SubtitlesList[i];
+				console.log(current);
+				if (current.Language==="Danish"){
+					return current.Uri;
+				}
+			}
+		}
+
+		function getStreamUri(manifest){
+			console.log("getStreamUri");
+			console.log(manifest);
+			for (var i=0; i<manifest.Links.length; i++){
+				var current = manifest.Links[i];
+				if (current.Target === "HLS"){
+					return current.Uri;
+				}
+			}
+		}
+
+
+
+
+
+
+
