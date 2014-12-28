@@ -1,9 +1,9 @@
 {
-  "name": "DR Chromecast",
-  "version": "2",
+  "name": "DR-Chromecast",
+  "version": "1",
   "manifest_version": 2,
   "description": "Chromecast support for dr.dk with DOM manipulation.",
-  "web_accessible_resources": ["images/cast.png"],
+  "web_accessible_resources": ["js/cast.js", "img/1.png"],
   "browser_action": {
     "name": "DR Chromecast",
     "icons": ["DR_large.png"],
