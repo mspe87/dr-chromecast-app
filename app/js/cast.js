@@ -57,8 +57,6 @@
   /* Current media variables */
   // @type {Boolean} Audio on and off
   this.audio = true;
-  // @type {Number} A number for current media index
-  this.currentMediaIndex = 0;
   // @type {Number} A number for current media time
   this.currentMediaTime = 0;
   // @type {Number} A number for current media duration
@@ -97,9 +95,9 @@ Caster.prototype.initializeCaster = function(){
 
 Caster.prototype.sessionListener = function(e){
 	this.session=e;
+	this.deviceState = DEVICE_STATE.ACTIVE;
 	console.log("sessionListener " + e);
-	console.log("sessionListener this" + this.session);
-	console.log(this);
+	this.onMediaDiscovered('activeSession', this.session.media[0]);
 
 };
 Caster.prototype.receiverListener = function(e){
@@ -142,6 +140,7 @@ Caster.prototype.launchApp = function() {
  	console.log(this);
  	this.session.stop(this.onStopAppSuccess.bind(this, 'Session stopped'),
  		this.onError.bind(this));    
+ 	this.castPlayerState = PLAYER_STATE.STOPPED;
 
  };
 
@@ -219,26 +218,74 @@ Caster.prototype.startStreaming = function(title, imageUri, streamUri, subtitleU
 		  }
 		};
 
-
-
 		Caster.prototype.onMediaDiscovered = function(how, media) {
 			console.log("onMediaDiscovered");
-			currentMedia = media;
-		};
+			if (media){
+				console.log("new media session ID:" + media.mediaSessionId + ' (' + how + ')');
+			}
 
-		Caster.prototype.onMediaError = function() {
-			console.log("onMediaError ");
-		};
+			if (this.session.media[0]){
+				this.castPlayerState = PLAYER_STATE.PLAYING;
+			} else {
+				this.castPlayerState = PLAYER_STATE.IDLE;
+			}
+			this.currentMediaSession = media;
+			if (this.castPlayerState != PLAYER_STATE.IDLE){
+				if( how == 'activeSession' ) {
+					this.castPlayerState = this.session.media[0].playerState; 
+					
+				} 
+				this.currentMediaTime = this.session.media[0].currentTime; 
+				this.currentMediaDuration = this.session.media[0].media.duration;
 
-		Caster.prototype.initializeUI = function() {
-			document.getElementById("casticonidle").addEventListener('click', this.launchApp.bind(this));
-			document.getElementById("casticonactive").addEventListener('click', this.stopApp.bind(this));
+				console.log("duration =" + this.currentMediaDuration);
 
-		};
+				if( this.castPlayerState == PLAYER_STATE.PLAYING ) {
+			    // start progress timer
+			    this.startProgressTimer(this.incrementMediaTime);
+			}
+		}
 
+	};
 
+	Caster.prototype.onMediaError = function() {
+		console.log("onMediaError ");
+	};
 
+		/**
+ * Helper function
+ * Increment media current position by 1 second 
+ */
+ Caster.prototype.incrementMediaTime = function() {
+ 	if( this.castPlayerState == PLAYER_STATE.PLAYING ) {
+ 		if( this.currentMediaTime < this.currentMediaDuration ) {
+ 			this.currentMediaTime += 1;
 
+ 			console.log( "currentTime: " + this.currentMediaTime + " duration: " + this.currentMediaDuration );
+ 		}
+ 		else {
+ 			this.currentMediaTime = 0;
+ 			clearInterval(this.timer);
+ 		}
+ 	}
+ };
 
-		window.Caster = Caster;
-	})();
+ /**
+ * @param {function} A callback function for the function to start timer 
+ */
+ Caster.prototype.startProgressTimer = function(callback) {
+ 	if( this.timer ) {
+ 		clearInterval(this.timer);
+ 		this.timer = null;
+ 	}
+
+  // start progress timer
+  this.timer = setInterval(callback.bind(this), this.timerStep);
+};
+
+Caster.prototype.initializeUI = function() {
+	document.getElementById("casticonidle").addEventListener('click', this.launchApp.bind(this));
+	document.getElementById("casticonactive").addEventListener('click', this.stopApp.bind(this));
+};
+window.Caster = Caster;
+})();
