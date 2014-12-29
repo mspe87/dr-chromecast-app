@@ -12,11 +12,52 @@
 	
 </head>
 <body>
-<button onclick="startPlayIng('http://www.dr.dk/tv/se/arvingerne/arvingerne-4-10')">test</button>
+	<form>
+		<input type="text" name="url" id="urlField" value="http://www.dr.dk/tv/se/arvingerne/arvingerne-4-10" size="65">
+	</form>
+	<button onclick="getMeta()">getMeta</button>
+	<button onclick="startPlaying()">startPlaying</button>
+	<form>
+		<p>Titel</p>
+		<input type="text" id="streamTitle" value="" size="65">
+		<br>
+		<p>StreamUrl</p>
+		<input type="text" id="streamUrl" value="" size="65">
+		<br>
+		<p>streamImageUrl</p>
+		<input type="text" id="streamImageUrl" value="" size="65">
+		<br>
+		<p>streamSubUrl</p>
+		<input type="text" id="streamSubUrl" value="" size="65">
+	</form>
 
-	<p>Hello world! This is HTML5 Boilerplate.</p>
-	<script type="text/javascript" src="/js/jquery-2.1.3.min.js"></script>
+	<button id="casticonidle">cast</button>
+	<button id="casticonactive">Stop</button>
+	<script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
 	<script type="text/javascript" src="https://www.gstatic.com/cv/js/sender/v1/cast_sender.js"></script>
 	<script type="text/javascript" src="js/cast.js"></script>
+	<script type="text/javascript" src="js/dr.js"></script>
 </body>
+
+<script type="text/javascript">
+var caster = null;
+$( document ).ready(function() {
+	 caster = new Caster();
+});
+function getMeta(){
+	var url = $("#urlField").val();
+	console.log(url);
+	startPlayIng(url);
+
+}
+
+function startPlaying(){
+	var title= $("#streamTitle").val();
+	var stream = $("#streamUrl").val();
+	var image = $("#streamImageUrl").val();
+	var subtitle = $("#streamSubUrl").val();
+
+	caster.startStreaming(title, image, stream, subtitle);
+}
+</script>
 </html>
