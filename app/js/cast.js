@@ -68,8 +68,7 @@
   // @type {Number} A number in milliseconds for minimal progress update
   this.timerStep = 1000;
 
-  /* media contents from JSON */
-  this.mediaContents = null;
+  this.imageUri = null;
 
   this.initializeCaster();
 
@@ -168,7 +167,7 @@ Caster.prototype.startStreaming = function(title, imageUri, streamUri, subtitleU
 	console.log("imageUri " + imageUri);
 
 	if (this.session!==null){
-
+		this.imageUri = imageUri;
 		var mediaInfo = new chrome.cast.media.MediaInfo(streamUri);
 
 		mediaInfo.metadata = new chrome.cast.media.GenericMediaMetadata();
@@ -220,6 +219,8 @@ Caster.prototype.startStreaming = function(title, imageUri, streamUri, subtitleU
 
 		Caster.prototype.onMediaDiscovered = function(how, media) {
 			console.log("onMediaDiscovered");
+			console.log(this.session.media[0]);
+
 			if (media){
 				console.log("new media session ID:" + media.mediaSessionId + ' (' + how + ')');
 			}
@@ -233,8 +234,12 @@ Caster.prototype.startStreaming = function(title, imageUri, streamUri, subtitleU
 			if (this.castPlayerState != PLAYER_STATE.IDLE){
 				if( how == 'activeSession' ) {
 					this.castPlayerState = this.session.media[0].playerState; 
-					
+
 				} 
+
+				
+
+				this.imageUri = this.session.media[0].media.metadata.images[0].url;
 				this.currentMediaTime = this.session.media[0].currentTime; 
 				this.currentMediaDuration = this.session.media[0].media.duration;
 
@@ -245,6 +250,7 @@ Caster.prototype.startStreaming = function(title, imageUri, streamUri, subtitleU
 			    this.startProgressTimer(this.incrementMediaTime);
 			}
 		}
+		this.updateDisplayImage();
 
 	};
 
@@ -261,12 +267,26 @@ Caster.prototype.startStreaming = function(title, imageUri, streamUri, subtitleU
  		if( this.currentMediaTime < this.currentMediaDuration ) {
  			this.currentMediaTime += 1;
 
- 			console.log( "currentTime: " + this.currentMediaTime + " duration: " + this.currentMediaDuration );
+ 			
+ 			this.updateProgressBarByTimer();
  		}
  		else {
  			this.currentMediaTime = 0;
  			clearInterval(this.timer);
  		}
+ 	}
+ };
+
+ Caster.prototype.updateProgressBarByTimer = function() {
+ 
+ 	var percentage = 100-((this.currentMediaDuration - this.currentMediaTime)/this.currentMediaDuration)*100;
+
+ 	document.getElementById("progressBar").style.width = percentage + "%";
+ };
+
+ Caster.prototype.updateDisplayImage = function() {
+ 	if (this.imageUri){
+ 		document.getElementById("streamImg").src = this.imageUri;
  	}
  };
 
