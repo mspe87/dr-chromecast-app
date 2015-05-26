@@ -224,7 +224,7 @@ Caster.prototype.startStreaming = function(title, imageUri, streamUri, subtitleU
 			if (media){
 				console.log("new media session ID:" + media.mediaSessionId + ' (' + how + ')');
 			}
-
+			console.log(this.session.media[0]);
 			if (this.session.media[0]){
 				this.castPlayerState = PLAYER_STATE.PLAYING;
 			} else {
